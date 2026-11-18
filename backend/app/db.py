@@ -1,21 +1,22 @@
-# Set up the database tools used by the app.
+"""Database connection setup using the SQLAlchemy 2.0 async engine."""
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
-# Provide the shared base class for database models.
 from sqlalchemy.orm import DeclarativeBase
 
-# Read the database address from the app settings.
 from app.config import settings
 
-# Create the async database engine and keep connections ready to use.
-engine = create_async_engine(settings.database_url, pool_pre_ping=True, future=True)
-# Create a database session linked to the engine.
+# The engine manages connections to PostgreSQL (Neon).
+# pool_pre_ping checks a connection is alive before using it (Neon pauses when idle).
+engine = create_async_engine(settings.database_url, pool_pre_ping=True)
+
+# Factory that creates a new session (one "conversation" with the database).
 AsyncSessionLocal = async_sessionmaker(engine, expire_on_commit=False)
 
+
 class Base(DeclarativeBase):
-    """Provide a shared base for database models."""
+    """Parent class for all database models (tables)."""
+
 
 async def get_db():
-    """Give callers a database session and close it when they finish."""
+    """Give each request its own database session, then close it automatically."""
     async with AsyncSessionLocal() as session:
-        # Hand the open session to the caller.
         yield session

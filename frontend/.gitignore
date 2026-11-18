@@ -1,0 +1,8 @@
+# Keep installed packages and build output out of source control.
+node_modules/
+dist/
+
+# Do not share local environment settings or secrets.
+.env
+.env.*
+!.env.example
