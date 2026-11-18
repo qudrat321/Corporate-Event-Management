@@ -1,0 +1,312 @@
+{
+  "info": {
+    "name": "Acme Corp Event Management",
+    "description": "Complete Postman collection for the Acme Corp Event Management API.\n\n**Setup:**\n1. Import this collection into Postman.\n2. Set the `base_url` variable to `http://127.0.0.1:8000` (default).\n3. Run **Admin Login** first — the token is auto-saved to the `token` collection variable.\n4. All admin requests use `{{token}}` automatically.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_postman_id": "acme-corp-events-v1"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://127.0.0.1:8000",
+      "type": "string",
+      "description": "Backend API base URL"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string",
+      "description": "JWT access token — auto-set by Admin Login request"
+    },
+    {
+      "key": "event_id",
+      "value": "1",
+      "type": "string",
+      "description": "Event ID for event-specific requests"
+    },
+    {
+      "key": "registration_id",
+      "value": "1",
+      "type": "string",
+      "description": "Registration ID for cancellation"
+    }
+  ],
+  "item": [
+    {
+      "name": "🏥 Health",
+      "item": [
+        {
+          "name": "GET /health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/health",
+              "host": ["{{base_url}}"],
+              "path": ["health"]
+            },
+            "description": "Check API and database connectivity. Should return {\"status\": \"ok\"}."
+          },
+          "response": []
+        },
+        {
+          "name": "GET / (Root)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/",
+              "host": ["{{base_url}}"],
+              "path": [""]
+            },
+            "description": "Returns API links."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "🔐 Authentication",
+      "item": [
+        {
+          "name": "Admin Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const json = pm.response.json();",
+                  "    pm.collectionVariables.set('token', json.access_token);",
+                  "    console.log('Token saved to collection variable.');",
+                  "} else {",
+                  "    console.error('Login failed:', pm.response.text());",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"YOUR_ADMIN_PASSWORD\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Authenticate as admin. The JWT token is automatically saved to the `token` collection variable and used in all admin requests."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "📅 Events",
+      "item": [
+        {
+          "name": "GET /events (List All)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/events?skip=0&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["events"],
+              "query": [
+                { "key": "skip", "value": "0", "description": "Pagination offset" },
+                { "key": "limit", "value": "10", "description": "Max results to return" },
+                { "key": "title", "value": "", "description": "Filter by title (partial match)", "disabled": true },
+                { "key": "date", "value": "", "description": "Filter by date (YYYY-MM-DD)", "disabled": true }
+              ]
+            },
+            "description": "List events with optional pagination and filtering. Public endpoint."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /events (Filter by Title)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/events?title=kickoff",
+              "host": ["{{base_url}}"],
+              "path": ["events"],
+              "query": [
+                { "key": "title", "value": "kickoff" }
+              ]
+            },
+            "description": "Filter events by title (partial, case-insensitive)."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /events/{id}",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/events/{{event_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["events", "{{event_id}}"]
+            },
+            "description": "Get a single event by ID. Returns 404 if not found."
+          },
+          "response": []
+        },
+        {
+          "name": "POST /events (Create) [Admin]",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Q2 All Hands Meeting\",\n  \"description\": \"Quarterly company update and strategy review\",\n  \"event_date\": \"2026-04-15\",\n  \"location\": \"HQ Main Auditorium\",\n  \"max_capacity\": 200\n}",
+              "options": {
+                "raw": { "language": "json" }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/events",
+              "host": ["{{base_url}}"],
+              "path": ["events"]
+            },
+            "description": "Create a new event. Requires admin JWT token. Returns 201 Created."
+          },
+          "response": []
+        },
+        {
+          "name": "PUT /events/{id} (Update) [Admin]",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Q2 All Hands Meeting (Updated)\",\n  \"description\": \"Updated description\",\n  \"event_date\": \"2026-04-16\",\n  \"location\": \"HQ Main Auditorium (Floor 2)\",\n  \"max_capacity\": 250\n}",
+              "options": {
+                "raw": { "language": "json" }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/events/{{event_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["events", "{{event_id}}"]
+            },
+            "description": "Update all fields of an event. All fields required. Admin only."
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE /events/{id} [Admin]",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/events/{{event_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["events", "{{event_id}}"]
+            },
+            "description": "Delete an event and all its registrations (cascade). Admin only."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "📋 Registrations",
+      "item": [
+        {
+          "name": "GET /events/{id}/registrations",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/events/{{event_id}}/registrations",
+              "host": ["{{base_url}}"],
+              "path": ["events", "{{event_id}}", "registrations"]
+            },
+            "description": "List all registrations for an event. Public endpoint."
+          },
+          "response": []
+        },
+        {
+          "name": "POST /events/{id}/registrations (Register)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const json = pm.response.json();",
+                  "    pm.collectionVariables.set('registration_id', json.id);",
+                  "    console.log('Registration ID saved:', json.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"employee_name\": \"Jane Smith\",\n  \"employee_email\": \"jane.smith@acmecorp.com\"\n}",
+              "options": {
+                "raw": { "language": "json" }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/events/{{event_id}}/registrations",
+              "host": ["{{base_url}}"],
+              "path": ["events", "{{event_id}}", "registrations"]
+            },
+            "description": "Register an employee for an event. Public endpoint. Returns 400 if event is full or email is already registered. Registration ID is auto-saved."
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE /registrations/{id} [Admin]",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/registrations/{{registration_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["registrations", "{{registration_id}}"]
+            },
+            "description": "Cancel a registration by ID. Admin only. Returns 404 if not found."
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
