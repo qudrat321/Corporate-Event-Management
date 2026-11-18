@@ -1,5 +1,6 @@
 """Business logic: the database operations for events."""
 from datetime import date
+import time
 
 from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
@@ -7,6 +8,15 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import Event, Registration
 from app.schemas import EventCreate, RegistrationCreate, EventUpdate
+
+_events_cache: list[Event] = []
+_events_cache_time: float = 0.0
+_CACHE_TTL = 300.0
+
+
+def invalidate_events_cache():
+    global _events_cache_time
+    _events_cache_time = 0.0
 
 
 class RegistrationConflict(Exception):
@@ -27,6 +37,7 @@ async def create_event(db: AsyncSession, data: EventCreate) -> Event:
     db.add(event)
     await db.commit()
     await db.refresh(event)
+    invalidate_events_cache()
     return event
 
 
@@ -37,27 +48,32 @@ async def list_events(
     title: str | None = None,
     event_date: date | None = None,
 ) -> tuple[list[Event], int]:
-    """Return a filtered event page and the total number of matches."""
-    filters = []
-    if title:
-        filters.append(Event.title.ilike(f"%{title}%"))
-    if event_date is not None:
-        filters.append(Event.event_date == event_date)
+    """Return a filtered event page and the total number of matches with fast caching."""
+    global _events_cache, _events_cache_time
+    now = time.time()
+    if not _events_cache or (now - _events_cache_time > _CACHE_TTL):
+        result = await db.execute(select(Event).order_by(Event.event_date, Event.id))
+        _events_cache = list(result.scalars().all())
+        _events_cache_time = now
 
-    total = await db.scalar(select(func.count()).select_from(Event).where(*filters))
-    query = (
-        select(Event)
-        .where(*filters)
-        .order_by(Event.event_date, Event.id)
-        .offset(skip)
-        .limit(limit)
-    )
-    result = await db.execute(query)
-    return list(result.scalars().all()), total or 0
+    filtered = _events_cache
+    if title:
+        search_title = title.lower()
+        filtered = [e for e in filtered if search_title in (e.title or "").lower()]
+    if event_date is not None:
+        filtered = [e for e in filtered if e.event_date == event_date]
+
+    total = len(filtered)
+    page_items = filtered[skip : skip + limit]
+    return page_items, total
 
 
 async def get_event(db: AsyncSession, event_id: int) -> Event | None:
-    """Return one event by id, or None if it doesn't exist."""
+    """Return one event by id (checks fast in-memory cache first)."""
+    global _events_cache
+    for event in _events_cache:
+        if event.id == event_id:
+            return event
     return await db.get(Event, event_id)
 
 
@@ -79,6 +95,7 @@ async def update_event(db: AsyncSession, event_id: int, data: EventUpdate) -> Ev
         setattr(event, field, value)
     await db.commit()
     await db.refresh(event)
+    invalidate_events_cache()
     return event
 
 
@@ -89,6 +106,7 @@ async def delete_event(db: AsyncSession, event_id: int) -> bool:
         return False
     await db.delete(event)
     await db.commit()
+    invalidate_events_cache()
     return True
 
 
