@@ -1,6 +1,7 @@
 // Set up page routes and the shared authentication and toast providers.
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import AppLayout from "./components/AppLayout.jsx";
+import LoginModal from "./components/LoginModal.jsx";
 import RequireAuth from "./components/RequireAuth.jsx";
 import { AuthProvider } from "./hooks/useAuth.jsx";
 import { ToastProvider } from "./hooks/useToast.jsx";
@@ -25,16 +26,17 @@ export default function App() {
     <AuthProvider>
       <ToastProvider>
         <BrowserRouter>
+          <LoginModal />
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="login" element={<LoginPage />} />
             <Route element={<AppLayout />}>
-              <Route path="events" element={<EventsPage />} />
-              <Route path="events/:id" element={<EventDetailsPage />} />
               <Route element={<RequireAuth />}>
+                <Route path="events" element={<Navigate to="/dashboard" replace />} />
                 <Route path="dashboard" element={<EventsPage />} />
                 <Route path="events/new" element={<EventFormPage />} />
                 <Route path="events/:id/edit" element={<EventFormPage />} />
+                <Route path="events/:id" element={<EventDetailsPage />} />
               </Route>
               <Route path="not-found" element={<NotFoundPage />} />
             </Route>

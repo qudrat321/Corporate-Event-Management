@@ -1,7 +1,7 @@
 // Sign in and save the API token for later requests.
 import { useState } from "react";
 import { ArrowRight, Eye, EyeOff, LockKeyhole } from "lucide-react";
-import { Navigate, useLocation, useNavigate } from "react-router-dom";
+import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { friendlyErrorMessage } from "../api/client.js";
 import { useAuth } from "../hooks/useAuth.jsx";
 import { useToast } from "../hooks/useToast.jsx";
@@ -22,7 +22,9 @@ export default function LoginPage() {
     try {
       await login({ username, password });
       notify("Welcome back.");
-      navigate(location.state?.from?.pathname || "/dashboard", { replace: true });
+      const fromPath = location.state?.from?.pathname;
+      const target = fromPath && fromPath !== "/" ? fromPath : "/dashboard";
+      navigate(target, { replace: true });
     } catch (error) {
       notify(friendlyErrorMessage(error), "error");
     } finally {
@@ -33,7 +35,13 @@ export default function LoginPage() {
   if (isAuthenticated) return <Navigate to="/dashboard" replace />;
 
   return (
-    <div className="mx-auto grid max-w-4xl overflow-hidden rounded-3xl bg-white shadow-card md:grid-cols-2">
+    <div className="mx-auto max-w-4xl space-y-4 px-4 py-8 sm:px-0 sm:py-12">
+      <div className="flex flex-wrap items-center justify-between gap-3 text-sm">
+        <Link to="/" className="font-medium text-muted hover:text-brand-700">
+          ← Back to home
+        </Link>
+      </div>
+      <div className="grid overflow-hidden rounded-3xl bg-white shadow-card md:grid-cols-2">
       <div className="hidden flex-col justify-between bg-brand-900 p-10 text-white md:flex">
         <div>
           <span className="inline-flex rounded-xl bg-white/10 p-3">
@@ -46,8 +54,7 @@ export default function LoginPage() {
             Good things happen when we get together.
           </h1>
           <p className="mt-4 text-sm leading-6 text-white/70">
-            Sign in to create events and manage the moments that bring your team
-            closer.
+            Sign in to access your event dashboard, manage attendees, and organize events.
           </p>
         </div>
         <p className="text-xs text-white/50">Event management, made simple.</p>
@@ -64,7 +71,7 @@ export default function LoginPage() {
           Welcome back
         </h2>
         <p className="mt-2 text-sm leading-6 text-muted">
-          Enter your details to manage Acme Corp events.
+          Enter your details to access the Acme Corp event dashboard.
         </p>
 
         <form onSubmit={handleSubmit} className="mt-7 space-y-5">
@@ -118,6 +125,7 @@ export default function LoginPage() {
             {!loading && <ArrowRight size={16} />}
           </button>
         </form>
+      </div>
       </div>
     </div>
   );

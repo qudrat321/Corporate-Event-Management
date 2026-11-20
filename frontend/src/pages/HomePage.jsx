@@ -8,7 +8,7 @@ import {
   Sparkles,
   Users,
 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth.jsx";
 
 const features = [
@@ -39,9 +39,22 @@ const planningSteps = [
 ];
 
 export default function HomePage() {
-  const { isAuthenticated } = useAuth();
-  const dashboardPath = isAuthenticated ? "/dashboard" : "/login";
-  const dashboardLabel = isAuthenticated ? "Open dashboard" : "Admin sign in";
+  const { isAuthenticated, openLoginModal } = useAuth();
+  const navigate = useNavigate();
+
+  if (isAuthenticated) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  const dashboardLabel = "Admin sign in";
+
+  function handleNavigate(path) {
+    if (isAuthenticated) {
+      navigate(path);
+    } else {
+      openLoginModal(path);
+    }
+  }
 
   return (
     <div className="min-h-screen overflow-hidden bg-white text-ink">
@@ -70,21 +83,26 @@ export default function HomePage() {
             aria-label="Main navigation"
             className="hidden items-center gap-8 text-sm font-medium text-slate-600 md:flex"
           >
-            <Link to="/events" className="transition hover:text-brand-700">
-              Explore events
-            </Link>
             <a href="#how-it-works" className="transition hover:text-brand-700">
               How it works
             </a>
+            <button
+              type="button"
+              onClick={() => handleNavigate("/dashboard")}
+              className="font-medium text-slate-600 transition hover:text-brand-700"
+            >
+              Dashboard
+            </button>
           </nav>
 
-          <Link
-            to={dashboardPath}
+          <button
+            type="button"
+            onClick={() => handleNavigate("/dashboard")}
             className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-brand-700 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-900 focus-visible:ring-4 focus-visible:ring-brand-100"
           >
             {dashboardLabel}
             <ArrowRight size={16} />
-          </Link>
+          </button>
         </div>
       </header>
 
@@ -113,28 +131,23 @@ export default function HomePage() {
                 the details and the people together in one welcoming place.
               </p>
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-                <Link
-                  to="/events"
-                  className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-brand-700 px-5 text-sm font-semibold text-white shadow-md shadow-brand-900/10 transition hover:-translate-y-0.5 hover:bg-brand-900 focus-visible:ring-4 focus-visible:ring-brand-100"
-                >
-                  Explore events
-                  <ArrowRight size={17} />
-                </Link>
-                <Link
-                  to={dashboardPath}
-                  className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-5 text-sm font-semibold text-ink transition hover:border-brand-200 hover:bg-brand-50 focus-visible:ring-4 focus-visible:ring-brand-100"
+                <button
+                  type="button"
+                  onClick={() => handleNavigate("/dashboard")}
+                  className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-brand-700 px-6 text-sm font-semibold text-white shadow-md shadow-brand-900/10 transition hover:-translate-y-0.5 hover:bg-brand-900 focus-visible:ring-4 focus-visible:ring-brand-100"
                 >
                   {dashboardLabel}
-                </Link>
+                  <ArrowRight size={17} />
+                </button>
               </div>
               <div className="mt-9 flex flex-wrap items-center gap-x-6 gap-y-3 text-sm text-slate-500">
                 <span className="inline-flex items-center gap-2">
                   <Check size={16} className="text-brand-600" />
-                  Simple event details
+                  Centralized event management
                 </span>
                 <span className="inline-flex items-center gap-2">
                   <Check size={16} className="text-brand-600" />
-                  Easy team registration
+                  Full event CRUD operations & registrations
                 </span>
               </div>
             </div>
@@ -228,9 +241,11 @@ export default function HomePage() {
 
           <div className="mt-11 grid gap-4 md:grid-cols-3">
             {features.map(({ icon: Icon, title, description }, index) => (
-              <article
+              <button
+                type="button"
                 key={title}
-                className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-card sm:p-7"
+                onClick={() => handleNavigate("/dashboard")}
+                className="text-left rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:border-brand-200 hover:shadow-card focus-visible:ring-4 focus-visible:ring-brand-100 sm:p-7"
               >
                 <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-50 text-brand-700">
                   <Icon size={21} />
@@ -242,7 +257,10 @@ export default function HomePage() {
                 <p className="mt-2 text-sm leading-6 text-slate-500">
                   {description}
                 </p>
-              </article>
+                <p className="mt-4 text-sm font-semibold text-brand-700">
+                  Open dashboard →
+                </p>
+              </button>
             ))}
           </div>
         </section>
@@ -263,23 +281,18 @@ export default function HomePage() {
                   Ready to bring everyone together?
                 </h2>
                 <p className="mt-3 text-sm leading-6 text-white/70">
-                  Explore what’s coming up or sign in to start planning.
+                  Sign in to access your event dashboard, manage details, and track attendee registrations.
                 </p>
               </div>
               <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
-                <Link
-                  to="/events"
-                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-white px-4 text-sm font-semibold text-brand-900 transition hover:bg-brand-50"
-                >
-                  Browse events
-                  <ArrowRight size={16} />
-                </Link>
-                <Link
-                  to={dashboardPath}
-                  className="inline-flex min-h-11 items-center justify-center rounded-xl border border-white/25 px-4 text-sm font-semibold text-white transition hover:bg-white/10"
+                <button
+                  type="button"
+                  onClick={() => handleNavigate("/dashboard")}
+                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-white px-5 text-sm font-semibold text-brand-900 transition hover:bg-brand-50"
                 >
                   {dashboardLabel}
-                </Link>
+                  <ArrowRight size={16} />
+                </button>
               </div>
             </div>
           </div>

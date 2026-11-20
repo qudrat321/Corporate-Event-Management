@@ -1,22 +1,24 @@
-// Keep dashboard navigation, account actions, and page layout in one place.
+// Keep navigation, account actions, and page layout in one place.
 import { useEffect, useState } from "react";
 import {
   CalendarDays,
+  Home,
+  LayoutDashboard,
   LogIn,
   LogOut,
   Menu,
   Plus,
   X,
 } from "lucide-react";
-import { Link, NavLink, Outlet, useNavigate } from "react-router-dom";
+import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth.jsx";
 import { useToast } from "../hooks/useToast.jsx";
 
-function WorkspaceLink({ isAuthenticated, onNavigate }) {
+function NavItem({ to, end = false, icon: Icon, children, onNavigate }) {
   return (
     <NavLink
-      to={isAuthenticated ? "/dashboard" : "/events"}
-      end
+      to={to}
+      end={end}
       onClick={onNavigate}
       className={({ isActive }) =>
         `flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition ${
@@ -26,14 +28,14 @@ function WorkspaceLink({ isAuthenticated, onNavigate }) {
         }`
       }
     >
-      <CalendarDays size={18} />
-      Events
+      <Icon size={18} />
+      {children}
     </NavLink>
   );
 }
 
 export default function AppLayout() {
-  const { isAuthenticated, logout } = useAuth();
+  const { isAuthenticated, logout, openLoginModal } = useAuth();
   const { notify } = useToast();
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -53,6 +55,8 @@ export default function AppLayout() {
     notify("You have been signed out.");
     navigate("/");
   }
+
+  const closeMenu = () => setMenuOpen(false);
 
   return (
     <div className="min-h-screen bg-canvas">
@@ -79,16 +83,41 @@ export default function AppLayout() {
         </Link>
 
         <div className="mb-3 mt-10 px-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
-          Workspace
+          {isAuthenticated ? "Workspace" : "Navigation"}
         </div>
-        <nav aria-label="Workspace navigation">
-          <WorkspaceLink isAuthenticated={isAuthenticated} />
+        <nav aria-label="Main navigation" className="space-y-1">
+          {!isAuthenticated && (
+            <NavItem to="/" end icon={Home} onNavigate={closeMenu}>
+              Home
+            </NavItem>
+          )}
+          {isAuthenticated ? (
+            <NavItem to="/dashboard" end icon={LayoutDashboard} onNavigate={closeMenu}>
+              Dashboard
+            </NavItem>
+          ) : (
+            <button
+              type="button"
+              onClick={() => {
+                closeMenu();
+                openLoginModal("/dashboard");
+              }}
+              className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-600 transition hover:bg-slate-50 hover:text-ink"
+            >
+              <LayoutDashboard size={18} />
+              Dashboard
+            </button>
+          )}
         </nav>
 
         <div className="mt-auto rounded-2xl bg-brand-50 p-4">
-          <p className="text-sm font-semibold text-brand-900">Make it a good one.</p>
+          <p className="text-sm font-semibold text-brand-900">
+            {isAuthenticated ? "Make it a good one." : "Sign in required"}
+          </p>
           <p className="mt-1 text-xs leading-5 text-brand-700">
-            Plan events that bring your people together.
+            {isAuthenticated
+              ? "Plan and manage events that bring your people together."
+              : "Sign in to access your dashboard and manage events."}
           </p>
         </div>
       </aside>
@@ -109,10 +138,12 @@ export default function AppLayout() {
               </button>
               <div className="min-w-0">
                 <p className="truncate text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">
-                  Acme Corp <span className="px-1 text-slate-300">/</span> Workspace
+                  Acme Corp{" "}
+                  <span className="px-1 text-slate-300">/</span>{" "}
+                  Workspace
                 </p>
                 <p className="truncate text-sm font-semibold text-ink sm:text-base">
-                  Event management
+                  {isAuthenticated ? "Event dashboard" : "Sign in to continue"}
                 </p>
               </div>
             </div>
@@ -138,13 +169,14 @@ export default function AppLayout() {
                   </button>
                 </>
               ) : (
-                <Link
-                  to="/login"
-                  className="inline-flex h-10 items-center gap-2 rounded-xl bg-brand-700 px-3 text-sm font-semibold text-white transition hover:bg-brand-900"
+                <button
+                  type="button"
+                  onClick={() => openLoginModal("/dashboard")}
+                  className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-ink transition hover:border-brand-200 hover:bg-brand-50"
                 >
                   <LogIn size={17} />
-                  Sign in
-                </Link>
+                  Admin sign in
+                </button>
               )}
             </div>
           </div>
@@ -152,22 +184,44 @@ export default function AppLayout() {
           {menuOpen && (
             <nav
               id="mobile-workspace-navigation"
-              aria-label="Mobile workspace navigation"
-              hidden={!menuOpen}
-              className="border-t border-slate-100 bg-white px-4 py-3 lg:hidden"
+              aria-label="Mobile navigation"
+              className="space-y-1 border-t border-slate-100 bg-white px-4 py-3 lg:hidden"
             >
-              <WorkspaceLink
-                isAuthenticated={isAuthenticated}
-                onNavigate={() => setMenuOpen(false)}
-              />
-              {isAuthenticated && (
+              {!isAuthenticated && (
+                <NavItem to="/" end icon={Home} onNavigate={closeMenu}>
+                  Home
+                </NavItem>
+              )}
+              {isAuthenticated ? (
+                <>
+                  <NavItem
+                    to="/dashboard"
+                    end
+                    icon={LayoutDashboard}
+                    onNavigate={closeMenu}
+                  >
+                    Dashboard
+                  </NavItem>
+                  <button
+                    type="button"
+                    onClick={handleLogout}
+                    className="mt-1 flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-slate-600 hover:bg-slate-50"
+                  >
+                    <LogOut size={18} />
+                    Log out
+                  </button>
+                </>
+              ) : (
                 <button
                   type="button"
-                  onClick={handleLogout}
-                  className="mt-1 flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-slate-600 hover:bg-slate-50"
+                  onClick={() => {
+                    closeMenu();
+                    openLoginModal("/dashboard");
+                  }}
+                  className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-slate-600 hover:bg-slate-50"
                 >
-                  <LogOut size={18} />
-                  Log out
+                  <LogIn size={18} />
+                  Admin sign in
                 </button>
               )}
             </nav>
@@ -184,7 +238,11 @@ export default function AppLayout() {
         <footer className="border-t border-slate-200 bg-white px-4 py-4 sm:px-7 lg:px-9">
           <div className="mx-auto flex max-w-[1600px] flex-col gap-1 text-xs text-muted sm:flex-row sm:items-center sm:justify-between">
             <span>Acme Corp Event Management</span>
-            <span>Plan together. Make it memorable.</span>
+            <span>
+              {isAuthenticated
+                ? "Plan together. Make it memorable."
+                : "Sign in to explore and manage events."}
+            </span>
           </div>
         </footer>
       </div>

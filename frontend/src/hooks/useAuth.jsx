@@ -1,5 +1,5 @@
-// Share the signed-in user state across pages and navigation.
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+// Share signed-in state and the login modal across the app.
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { api } from "../api/client.js";
 
 const AuthContext = createContext(null);
@@ -7,10 +7,14 @@ const TOKEN_KEY = "access_token";
 
 export function AuthProvider({ children }) {
   const [token, setToken] = useState(() => window.localStorage.getItem(TOKEN_KEY));
+  const [loginModalOpen, setLoginModalOpen] = useState(false);
+  const [afterLoginPath, setAfterLoginPath] = useState("/dashboard");
 
   useEffect(() => {
     function handleExpiredToken() {
       setToken(null);
+      setAfterLoginPath("/dashboard");
+      setLoginModalOpen(true);
     }
     window.addEventListener("auth:expired", handleExpiredToken);
     return () => window.removeEventListener("auth:expired", handleExpiredToken);
@@ -30,9 +34,29 @@ export function AuthProvider({ children }) {
     setToken(null);
   }
 
+  const openLoginModal = useCallback((redirectPath = "/dashboard") => {
+    const target =
+      redirectPath && redirectPath !== "/" ? redirectPath : "/dashboard";
+    setAfterLoginPath(target);
+    setLoginModalOpen(true);
+  }, []);
+
+  const closeLoginModal = useCallback(() => {
+    setLoginModalOpen(false);
+  }, []);
+
   const value = useMemo(
-    () => ({ token, isAuthenticated: Boolean(token), login, logout }),
-    [token],
+    () => ({
+      token,
+      isAuthenticated: Boolean(token || window.localStorage.getItem(TOKEN_KEY)),
+      login,
+      logout,
+      loginModalOpen,
+      afterLoginPath,
+      openLoginModal,
+      closeLoginModal,
+    }),
+    [token, loginModalOpen, afterLoginPath, openLoginModal, closeLoginModal],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

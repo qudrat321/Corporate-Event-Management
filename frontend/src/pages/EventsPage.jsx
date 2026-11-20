@@ -1,10 +1,11 @@
-// Search, filter, and manage events from the main workspace.
+// Search, filter, and browse events. Guests explore publicly; admins manage.
 import { useEffect, useMemo, useState } from "react";
 import {
   CalendarDays,
   ChevronLeft,
   ChevronRight,
   CircleHelp,
+  Plus,
   Search,
   SlidersHorizontal,
   Users,
@@ -118,18 +119,21 @@ export default function EventsPage() {
             Your workspace
           </div>
           <h1 className="text-3xl font-semibold tracking-tight text-ink sm:text-4xl">
-            {isAuthenticated ? "Events dashboard" : "Explore events"}
+            Events dashboard
           </h1>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500 sm:text-base">
-            {isAuthenticated
-              ? "Find upcoming events, keep an eye on capacity, and manage the details in one place."
-              : "Discover upcoming events, see the details, and find the right moment to join your team."}
+            Find upcoming events, keep an eye on capacity, and manage the details in one place.
           </p>
         </div>
-        <div className="flex items-center gap-2 text-sm text-slate-500">
-          <span className="h-2 w-2 rounded-full bg-emerald-500" aria-hidden="true" />
-          Event workspace
-        </div>
+        {isAuthenticated && (
+          <Link
+            to="/events/new"
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-brand-700 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-900 focus-visible:ring-4 focus-visible:ring-brand-100"
+          >
+            <Plus size={16} />
+            Create event
+          </Link>
+        )}
       </section>
 
       <section
@@ -138,13 +142,17 @@ export default function EventsPage() {
       >
         <MetricCard
           label={total === null ? "Events in view" : "Matching events"}
-          value={loading || loadError ? "—" : (total ?? events.length).toLocaleString()}
+          value={
+            loading || loadError
+              ? "—"
+              : (total ?? events.length).toLocaleString()
+          }
           note={
             loadError
               ? "Unavailable until the API responds"
               : total === null
-              ? "Events currently shown on this page"
-              : "Events matching your current filters"
+                ? "Events currently shown on this page"
+                : "Events matching your current filters"
           }
           icon={CalendarDays}
         />
@@ -246,13 +254,13 @@ export default function EventsPage() {
               ? "Loading events…"
               : loadError
                 ? "Event results are unavailable"
-              : total !== null
-                ? `${total.toLocaleString()} matching event${total === 1 ? "" : "s"}`
-                : `${events.length} event${events.length === 1 ? "" : "s"} loaded`}
+                : total !== null
+                  ? `${total.toLocaleString()} matching event${total === 1 ? "" : "s"}`
+                  : `${events.length} event${events.length === 1 ? "" : "s"} loaded`}
           </p>
           <span className="hidden items-center gap-1.5 sm:inline-flex">
             <CircleHelp size={14} />
-            Select an event to see its details
+            Select an event to view details and manage
           </span>
         </div>
 
@@ -260,9 +268,12 @@ export default function EventsPage() {
           <LoadingState label="Loading your events..." />
         ) : loadError ? (
           <div className="rounded-2xl border border-red-100 bg-white px-6 py-12 text-center shadow-sm">
-            <h3 className="font-semibold text-ink">Events are temporarily unavailable</h3>
+            <h3 className="font-semibold text-ink">
+              Events are temporarily unavailable
+            </h3>
             <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-muted">
-              Check your connection and try again. Your search filters will stay in place.
+              Check your connection and try again. Your search filters will stay
+              in place.
             </p>
             <button
               type="button"
@@ -312,7 +323,7 @@ export default function EventsPage() {
           </div>
         )}
 
-        {!loading && !loadError && events.length > 0 && (
+        {!loading && !loadError && events.length > 0 && (skip > 0 || canGoNext) && (
           <nav
             aria-label="Event list pages"
             className="mt-6 flex flex-col gap-3 border-t border-slate-200 pt-4 sm:flex-row sm:items-center sm:justify-between"

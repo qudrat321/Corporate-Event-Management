@@ -128,8 +128,8 @@ export default function EventDetailsPage() {
         <p className="mt-2 text-sm text-muted">
           We couldn't load this event. It may have been removed.
         </p>
-        <Link to="/events" className="mt-5 inline-flex text-sm font-semibold text-brand-700">
-          Back to events
+        <Link to="/dashboard" className="mt-5 inline-flex text-sm font-semibold text-brand-700">
+          Back to dashboard
         </Link>
       </div>
     );
@@ -138,11 +138,11 @@ export default function EventDetailsPage() {
   return (
     <div className="mx-auto max-w-5xl">
       <Link
-        to="/events"
+        to="/dashboard"
         className="mb-5 inline-flex items-center gap-2 text-sm font-medium text-muted hover:text-brand-700"
       >
         <ArrowLeft size={16} />
-        All events
+        Dashboard
       </Link>
 
       <section className="overflow-hidden rounded-3xl bg-white shadow-card">
@@ -281,13 +281,31 @@ export default function EventDetailsPage() {
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-brand-600">
               Save your spot
             </p>
-            <h2 className="mt-1 text-xl font-semibold text-ink">Register for this event</h2>
+            <h2 className="mt-1 text-xl font-semibold text-ink">
+              Register for this event
+            </h2>
             <p className="mt-2 text-sm leading-6 text-muted">
-              Add your details and we’ll see you there.
+              Anyone can admit themselves here — no account or admin sign-in
+              required. Add your details and we’ll see you there.
             </p>
+            {!registrationsLoading &&
+              !registrationsError &&
+              Number.isFinite(Number(event.max_capacity)) && (
+                <p className="mt-3 text-sm font-medium text-brand-800">
+                  {Math.max(0, Number(event.max_capacity) - registrations.length)}{" "}
+                  spot
+                  {Math.max(0, Number(event.max_capacity) - registrations.length) ===
+                  1
+                    ? ""
+                    : "s"}{" "}
+                  left
+                </p>
+              )}
             <form onSubmit={handleRegister} className="mt-5 space-y-4">
               <label className="block">
-                <span className="mb-1.5 block text-sm font-medium text-ink">Full name</span>
+                <span className="mb-1.5 block text-sm font-medium text-ink">
+                  Full name
+                </span>
                 <input
                   required
                   value={employeeName}
@@ -297,7 +315,9 @@ export default function EventDetailsPage() {
                 />
               </label>
               <label className="block">
-                <span className="mb-1.5 block text-sm font-medium text-ink">Work email</span>
+                <span className="mb-1.5 block text-sm font-medium text-ink">
+                  Work email
+                </span>
                 <input
                   required
                   type="email"
