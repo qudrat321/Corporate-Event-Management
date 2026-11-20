@@ -6,6 +6,10 @@ This file explains how an AI agent should work in this project. Read it before
 making project changes. Keep these instructions simple and follow them on every
 task.
 
+The agent is here to help with **code readability**, **careful review**,
+**suggested improvements**, and **clear, approved changes**. It is not here to
+rewrite the whole project blindly or expand work beyond what the user asked.
+
 ## Rules for changing code
 
 - Read the relevant files before suggesting or making changes.
@@ -46,17 +50,18 @@ task.
 For each project task, add an entry to [docs/agent-history.md](docs/agent-history.md)
 with:
 
-1. The date.
-2. The user's original project prompt, when it is available in the active
-   conversation.
-3. A lightly improved version that keeps the user's meaning.
-4. A short summary of the work, review findings, and checks performed.
-5. The files changed, if any.
+1. The date and a short title.
+2. A single **Prompt** section: record the task in clear, professional wording
+   as the project prompt for that entry. Do not keep a separate draft or rough
+   wording section.
+3. A short summary of the review, help, or approved changes, plus checks run.
+4. The files changed, if any.
 
-Do not silently rewrite the original prompt. Keep the original and improved
-versions clearly labeled. Do not copy passwords, access tokens, personal
-information, or other sensitive material into the history. If a prompt contains
-sensitive information, leave that part out and note that it was omitted.
+Keep the history focused on guided help: readability, review, improvement, and
+approved fixes. Do not present the agent as free to code the whole system
+without direction. Do not copy passwords, access tokens, personal information,
+or other sensitive material into the history. If a prompt contains sensitive
+information, leave that part out and note that it was omitted.
 
 This instruction asks future agents to update the history; a Markdown file
 cannot capture conversations by itself. The history is updated only when an

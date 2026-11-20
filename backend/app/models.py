@@ -17,12 +17,14 @@ class Event(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     title: Mapped[str] = mapped_column(String(200))
     description: Mapped[str | None] = mapped_column(Text, default=None)
-    event_date: Mapped[date] = mapped_column(Date)
+    event_date: Mapped[date] = mapped_column(Date, index=True)
     location: Mapped[str] = mapped_column(String(255))
     max_capacity: Mapped[int]
+    # passive_deletes lets PostgreSQL CASCADE remove registrations without an extra SELECT.
     registrations: Mapped[list[Registration]] = relationship(
         back_populates="event",
         cascade="all, delete-orphan",
+        passive_deletes=True,
     )
 
 

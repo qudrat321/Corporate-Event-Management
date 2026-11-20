@@ -143,8 +143,11 @@ class EventApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(first_page.json()["total"], 15)
         self.assertEqual(len(first_page.json()["items"]), 10)
         self.assertEqual(len(second_page.json()["items"]), 5)
-        oversized_page = await self.client.get("/events", params={"limit": 11})
+        oversized_page = await self.client.get("/events", params={"limit": 101})
         self.assertEqual(oversized_page.status_code, 422)
+        large_page = await self.client.get("/events", params={"skip": 0, "limit": 100})
+        self.assertEqual(large_page.status_code, 200)
+        self.assertEqual(len(large_page.json()["items"]), 15)
 
     async def test_registration_conflicts_capacity_and_cancellation(self):
         headers = await self.administrator_headers()

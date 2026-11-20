@@ -1,7 +1,21 @@
 """Pydantic schemas: validate incoming data and shape outgoing responses."""
 from datetime import date
+from typing import Annotated
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from email_validator import EmailNotValidError, validate_email
+from pydantic import AfterValidator, BaseModel, ConfigDict, Field
+
+
+def _normalize_email(value: str) -> str:
+    """Check email shape only — skip slow DNS/MX lookups."""
+    try:
+        result = validate_email(value, check_deliverability=False)
+    except EmailNotValidError as exc:
+        raise ValueError("Invalid email address") from exc
+    return result.normalized
+
+
+EmployeeEmail = Annotated[str, AfterValidator(_normalize_email)]
 
 
 class EventBase(BaseModel):
@@ -71,7 +85,7 @@ class RegistrationCreate(BaseModel):
     model_config = ConfigDict(str_strip_whitespace=True)
 
     employee_name: str = Field(..., min_length=1, max_length=200)
-    employee_email: EmailStr
+    employee_email: EmployeeEmail
 
 
 class RegistrationResponse(BaseModel):
@@ -80,6 +94,6 @@ class RegistrationResponse(BaseModel):
     id: int
     event_id: int
     employee_name: str
-    employee_email: EmailStr
+    employee_email: EmployeeEmail
 
     model_config = ConfigDict(from_attributes=True)

@@ -77,7 +77,7 @@ async def create_event(
 @app.get("/events", response_model=EventListResponse, tags=["Events"], summary="List events")
 async def list_events(
     skip: int = Query(0, ge=0),
-    limit: int = Query(10, ge=1, le=10),
+    limit: int = Query(10, ge=1, le=100),
     title: str | None = Query(None, max_length=200),
     event_date: date | None = Query(None, alias="date"),
     db: AsyncSession = Depends(get_db),
